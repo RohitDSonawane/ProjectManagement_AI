@@ -1,13 +1,12 @@
 import os
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional, Any
+from typing import Optional, Any
 from dotenv import load_dotenv
 
 from services.llm_service import llm_service
 from services.supabase_service import supabase_service
-from models.card import CaseStudyCard
 from middleware.auth import AuthMiddleware
 import uvicorn
 
@@ -16,7 +15,6 @@ load_dotenv()
 
 def validate_env():
     required_keys = [
-        "OPENROUTER_API_KEY", 
         "TAVILY_API_KEY", 
         "SUPABASE_URL", 
         "SUPABASE_SERVICE_ROLE_KEY"
@@ -52,11 +50,27 @@ class GenerateResponse(BaseModel):
     content: Any  # CaseStudyCard dict or str
     status: str = "success"
 
+
+class HistoryResponse(BaseModel):
+    history: list[dict[str, Any]]
+
 # --- Routes ---
 
 @app.get("/")
 async def root():
     return {"message": "PM Learning Agent API is online"}
+
+
+@app.get("/api/health")
+async def health():
+    """
+    Lightweight health endpoint for frontend connectivity checks.
+    """
+    return {
+        "status": "ok",
+        "service": "pm-learning-agent-api",
+        "supabase_connected": bool(supabase_service.client),
+    }
 
 @app.post("/api/generate", response_model=GenerateResponse)
 async def generate_card(request: GenerateRequest):
@@ -87,6 +101,21 @@ async def get_history(request: Request):
     
     try:
         history = supabase_service.get_user_history(user.id)
+        return {"history": history}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/history/public", response_model=HistoryResponse)
+async def get_public_history(
+    user_id: str = Query(..., min_length=1),
+    limit: int = Query(10, ge=1, le=50),
+):
+    """
+    Prototype-friendly history endpoint for anonymous frontend sessions.
+    """
+    try:
+        history = supabase_service.get_user_history(user_id, limit=limit)
         return {"history": history}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

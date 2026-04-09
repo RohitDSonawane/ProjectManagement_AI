@@ -9,7 +9,14 @@ class AuthMiddleware(BaseHTTPMiddleware):
     """
     async def dispatch(self, request: Request, call_next):
         # Exclude root and public endpoints
-        if request.url.path in ["/", "/docs", "/openapi.json", "/api/generate"]:
+        if request.url.path in [
+            "/",
+            "/docs",
+            "/openapi.json",
+            "/api/generate",
+            "/api/health",
+            "/api/history/public",
+        ]:
             # Note: For prototype, /api/generate is public or uses anonymous user_id
             return await call_next(request)
             
