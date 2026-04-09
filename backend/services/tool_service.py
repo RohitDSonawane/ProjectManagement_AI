@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
-from .supabase_service import supabase_service
-from .embed_service import embed_service
+from services.supabase_service import supabase_service
+from services.embed_service import embed_service
 import requests
 import os
 
