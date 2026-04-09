@@ -26,14 +26,14 @@ CREATE TABLE IF NOT EXISTS query_history (
 CREATE TABLE IF NOT EXISTS knowledge_base (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     content TEXT NOT NULL,
-    embedding VECTOR(1536),
+    embedding VECTOR(2048),
     metadata JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Vector Search Function
 CREATE OR REPLACE FUNCTION match_knowledge_base (
-  query_embedding VECTOR(1536),
+  query_embedding VECTOR(2048),
   match_threshold FLOAT,
   match_count INT
 )

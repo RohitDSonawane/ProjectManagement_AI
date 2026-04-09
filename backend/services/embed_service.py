@@ -20,7 +20,7 @@ class EmbedService:
         """
         if not self.api_key:
             print("[WARNING] OPENROUTER_API_KEY not found for embeddings")
-            return [0.0] * 1536 # Default for text-embedding-3-small
+            return [0.0] * 2048 # Default for nvidia/llama-nemotron-embed-vl-1b-v2:free
             
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -36,9 +36,11 @@ class EmbedService:
             response = requests.post(self.url, headers=headers, json=payload)
             response.raise_for_status()
             data = response.json()
-            return data["data"][0]["embedding"]
+            embedding = data["data"][0]["embedding"]
+            print(f"--- [DEBUG] Query Embedding Dimension: {len(embedding)} ---")
+            return embedding
         except Exception as e:
             print(f"[ERROR] Embedding failed: {e}")
-            return [0.0] * 1536
+            return [0.0] * 2048
 
 embed_service = EmbedService()

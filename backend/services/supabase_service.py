@@ -63,7 +63,7 @@ class SupabaseService:
         
         try:
             response = self.client.table("query_history") \
-                .select("query, card_json(concept)") \
+                .select("query, card_json, route, created_at") \
                 .eq("user_id", user_id) \
                 .order("created_at", desc=True) \
                 .limit(limit) \
@@ -71,6 +71,40 @@ class SupabaseService:
             return response.data
         except Exception as e:
             print(f"[ERROR] Fetching history failed: {e}")
+            return []
+
+    def get_conversation_history(self, user_id: str, limit: int = 10) -> List[Dict]:
+        """
+        Retrieves and formats history for LangChain context window.
+        """
+        if not self.client:
+            return []
+            
+        try:
+            # Fetch last N turns, ordered descending from database, then reverse for chronological order
+            response = self.client.table("query_history") \
+                .select("query, card_json") \
+                .eq("user_id", user_id) \
+                .order("created_at", desc=True) \
+                .limit(limit) \
+                .execute()
+                
+            history = []
+            for row in reversed(response.data):
+                # User turn
+                if row.get("query"):
+                    history.append({"role": "user", "content": row["query"]})
+                
+                # Assistant turn
+                card = row.get("card_json") or {}
+                if "response" in card:
+                    history.append({"role": "assistant", "content": card["response"]})
+                elif "concept" in card:
+                    history.append({"role": "assistant", "content": f"Generated Case Study: {card['concept']}"})
+                    
+            return history
+        except Exception as e:
+            print(f"[ERROR] Fetching conversation failed: {e}")
             return []
 
 supabase_service = SupabaseService()
