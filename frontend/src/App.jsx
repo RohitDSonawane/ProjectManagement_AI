@@ -1,5 +1,5 @@
-import HomePage from './pages/HomePage'
+import LandingPage from './pages/landing/Index'
 
 export default function App() {
-  return <HomePage />
+  return <LandingPage />
 }
